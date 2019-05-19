@@ -1,10 +1,32 @@
-const dataset = [
-  1,2,3,4,5,6,7,8,9
-]
 
-interface ICorrupt{
-  index: number;
-  value: any;
+import mathf, {IGraph} from './math'
+
+const dataset = [63.6, 44.6, 78.9, 76.7, 63.2, 52.4, 38.3, 69, 36.7, 66.5, 23.4, 17.2, 99.5, 10.6, 53]
+
+function getPoints(pointAmount: number){
+  let arr: number[] = [];
+  for(let i = Math.ceil((0 - pointAmount)/2); i<Math.floor(pointAmount/2); i++){
+    //3x^5+ix^3+3
+    arr.push(3*Math.pow(i, 5) + Math.pow(i, 3) + 3)
+  }
+  return arr;
+}
+
+function toCoordinate(set: number[]): IGraph{
+  let graph: IGraph = {points: []};
+  dataset.forEach((val, index) => {
+    graph.points.push([index, val])
+  })
+  return graph
+}
+
+let corruptArr: number[] = [];
+
+let detectErrorArr: Array<IError> = [];
+ 
+interface IError {
+    index: number;
+    errorValue: number;
 }
 
 interface ISearchResult{
@@ -38,4 +60,68 @@ function search(goal: number, index?: number, steps: number = 1, leftBound: numb
   }
 }
 
-console.log(search(-5))
+export function detectErrors(dataSet: Array<number>) {
+    // We will detect errors by linearly going through all the numbers
+    // We check them initially against index [0], and [len - 1] (Assuming these are not corrupt)
+    // And if they are between the 2 numbers, we move n upwards, towards len - 1.
+    detectErrorArr = [];
+    let i: number = 0;
+    let j: number = dataSet.length - 1;
+    let index = i + 1;
+    while (index < j) {
+        if (isCorrupt(dataSet[index], dataSet[i], dataSet[j])) {
+            const error = {
+                errorValue: dataSet[index],
+                index: index
+            };
+            console.log(error);
+            detectErrorArr.push(error);
+        } else {
+            i = index;
+        }
+        index++;
+    }
+    return detectErrorArr;
+}
+ 
+export function detectErrorsBi(dataSet: Array<number>) {
+    detectErrorArr = [];
+    let i: number = 0;
+    let j: number = dataSet.length - 1;
+    let index = i + 1;
+    let incLeft = true;
+    while (index < j) {
+        if (isCorrupt(dataSet[index], dataSet[i], dataSet[j])) {
+            const error = {
+                errorValue: dataSet[index],
+                index: index
+            };
+            detectErrorArr.push(error);
+        } else {
+            if (incLeft) {
+                i = index;
+            } else {
+                let tempJ = j - 1;
+                while (isCorrupt(dataSet[tempJ], dataSet[i], dataSet[j])) {
+                    const error = {
+                        errorValue: dataSet[tempJ],
+                        index: tempJ
+                    };
+                    detectErrorArr.push(error);
+                    tempJ--;
+                }
+                j = tempJ;
+            }
+        }
+        incLeft = !incLeft;
+        index++;
+    }
+    return detectErrorArr;
+}
+ 
+function isCorrupt(current: number, min: number, max: number) {
+    return current < min || current > max;
+}
+console.log(mathf.getBestFit({points: toCoordinate(getPoints(20)).points}))
+//console.log(detectErrorsBi(dataset))
+//console.log(search(-5))
